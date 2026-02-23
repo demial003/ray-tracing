@@ -1,9 +1,5 @@
 #include "vec3.c"
-
-typedef struct {
-  point3 *orig;
-  vec3 *dir;
-} ray;
+#include <stdio.h>
 
 ray *ray_init(point3 *p, vec3 *v) {
   ray *r = malloc(sizeof(ray));

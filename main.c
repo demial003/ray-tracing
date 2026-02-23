@@ -34,24 +34,44 @@ int main(void) {
   vec3 *viewport_v = vec3_init(0, -viewport_height, 0);
   ;
 
-  vec3 *pixel_data_u = vec3_scalar_divide(viewport_u, image_width);
-  vec3 *pixel_data_v = vec3_scalar_divide(viewport_v, image_height);
+  printf("viewport u: ");
+  vec3_print(viewport_u);
+
+  printf("viewport v: ");
+  vec3_print(viewport_v);
+
+  vec3 *pixel_delta_u = vec3_scalar_divide(viewport_u, (double)image_width);
+  vec3 *pixel_delta_v = vec3_scalar_divide(viewport_v, (double)image_height);
+
+  printf("pixel_delta_u u: ");
+  vec3_print(pixel_delta_u);
+
+  printf("pixel_delta_v v: ");
+  vec3_print(pixel_delta_v);
 
   point3 *viewport_uppper_left =
       vec3_subtract(vec3_subtract(camera_center, vec3_init(0, 0, focal_length)),
                     vec3_subtract(vec3_scalar_divide(viewport_u, 2.0),
                                   vec3_scalar_divide(viewport_v, 2.0)));
-  point3 *pixel00_loc =
-      vec3_add(viewport_uppper_left,
-               vec3_scalar_multiply(vec3_add(pixel_data_u, pixel_data_v), 0.5));
 
+  printf("viewport_uppper_left: ");
+  vec3_print(viewport_uppper_left);
+
+  point3 *pixel00_loc = vec3_add(
+      viewport_uppper_left,
+      vec3_scalar_multiply(vec3_add(pixel_delta_u, pixel_delta_v), 0.5));
   printf("P3\n%d %d \n255\n", image_width, image_height);
+  printf("pixel00_loc: ");
+  vec3_print(pixel00_loc);
+
   for (int j = 0; j < image_height; j++) {
+    int j, i = 0;
     fprintf(file, "\rScanlines remaining: ", image_height - j);
     for (int i = 0; i < image_width; i++) {
-      vec3 *pixel_center = vec3_add(
-          pixel00_loc, vec3_add(vec3_scalar_multiply(pixel_data_u, i),
-                                vec3_scalar_multiply(pixel_data_v, j)));
+      vec3 *pixel_center =
+          vec3_add(pixel00_loc,
+                   vec3_add(vec3_scalar_multiply(pixel_delta_u, (double)i),
+                            vec3_scalar_multiply(pixel_delta_v, (double)j)));
       vec3 *ray_direction = vec3_subtract(pixel_center, camera_center);
       ray *r = ray_init(camera_center, ray_direction);
       color *pixel_color = ray_color(r);
@@ -61,9 +81,9 @@ int main(void) {
 
   free(viewport_u);
   free(viewport_v);
-  free(pixel_data_u);
-  free(pixel_data_v);
-  free(viewport_uppper_left);
+  free(pixel_delta_u);
+  free(pixel_delta_v);
+  // free(viewport_uppper_left);
 
   fprintf(file, "\rDone.						"
                 "		\n");
