@@ -1,7 +1,5 @@
-#include "vec3.h"
+#include "stuff.h"
 #include <stdio.h>
-
-typedef vec3 color;
 
 void write_color(color *pixel_color) {
   double r = pixel_color->x;
