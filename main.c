@@ -1,11 +1,32 @@
 #include "color.h"
 #include "ray.h"
 #include "vec3.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+double hit_sphere(point3 center, double radius, ray r) {
+  vec3 oc = vec3_subtract(center, r.orig);
+  double a = vec3_dot(r.dir, r.dir);
+  double b = -2.0 * vec3_dot(r.dir, oc);
+  double c = vec3_dot(oc, oc) - radius * radius;
+  double discriminant = b * b - 4 * a * c;
+
+  if (discriminant < 0) {
+    return -1.0;
+  } else {
+    return (-b - sqrt(discriminant)) / (2.0 * a);
+  }
+}
 
 color ray_color(ray r) {
+  double t = (hit_sphere(vec3_init(0.0, 0.0, -1.0), 0.5, r));
+  if (t > 0.0) {
+    vec3 N = vec3_unit_vector(
+        vec3_subtract(ray_at(r, t), vec3_init(0.0, 0.0, -1.0)));
+    return vec3_scalar_multiply(vec3_init(N.x + 1.0, N.y + 1.0, N.z + 1.0),
+                                0.5);
+  }
   vec3 unit = vec3_unit_vector(r.dir);
   double a = 0.5 * (unit.y + 1.0);
   vec3 comp1 = vec3_scalar_multiply(vec3_init(1.0, 1.0, 1.0), 1.0 - a);
@@ -38,11 +59,10 @@ int main(void) {
   vec3 pixel_delta_u = vec3_scalar_divide(viewport_u, (double)image_width);
   vec3 pixel_delta_v = vec3_scalar_divide(viewport_v, (double)image_height);
 
-  point3 viewport_uppper_left =
-      vec3_subtract(vec3_add(camera_center, vec3_init(0, 0, focal_length)),
-                    vec3_add(vec3_scalar_divide(viewport_u, 2.0),
-                             vec3_scalar_divide(viewport_v, 2.0)));
-
+  point3 viewport_uppper_left = vec3_subtract(
+      camera_center, vec3_add(vec3_init(0, 0, focal_length),
+                              vec3_add(vec3_scalar_divide(viewport_u, 2),
+                                       vec3_scalar_divide(viewport_v, 2))));
   point3 pixel00_loc = vec3_add(
       viewport_uppper_left,
       vec3_scalar_multiply(vec3_add(pixel_delta_u, pixel_delta_v), 0.5));
