@@ -1,4 +1,4 @@
-main: main.c vec3.h color.h ray.h
+main: main.c sphere_list.h hittable.h sphere.h
 	rm -rf out.ppm
-	gcc -Wall -Werror -std=c99 -lm -g -fsanitize=address -o main main.c
+	gcc -std=c99 -lm -g -fsanitize=address -o main main.c
 	./main > out.ppm

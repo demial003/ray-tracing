@@ -1,7 +1,5 @@
 #ifndef COLOR_H
 #define COLOR_H
-#include "vec3.h"
-#include <stdio.h>
 
 void write_color(color pixel_color) {
   double r = pixel_color.x;

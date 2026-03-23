@@ -1,32 +1,19 @@
-#include "color.h"
-#include "ray.h"
-#include "vec3.h"
+#include "hittable.h"
+#include "rtweekend.h"
+#include "sphere.h"
+#include "sphere_list.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-double hit_sphere(point3 center, double radius, ray r) {
-  vec3 oc = vec3_subtract(center, r.orig);
-  double a = vec3_dot(r.dir, r.dir);
-  double b = -2.0 * vec3_dot(r.dir, oc);
-  double c = vec3_dot(oc, oc) - radius * radius;
-  double discriminant = b * b - 4 * a * c;
 
-  if (discriminant < 0) {
-    return -1.0;
-  } else {
-    return (-b - sqrt(discriminant)) / (2.0 * a);
+color ray_color(ray r, sphere_list_t *world) {
+  hit_record rec;
+  if (sphere_list_hit(world, r, 0, infinity, &rec)) {
+    color c = vec3_init(1, 1, 1);
+    return vec3_scalar_multiply(vec3_add(rec.normal, c), 0.5);
   }
-}
 
-color ray_color(ray r) {
-  double t = (hit_sphere(vec3_init(0.0, 0.0, -1.0), 0.5, r));
-  if (t > 0.0) {
-    vec3 N = vec3_unit_vector(
-        vec3_subtract(ray_at(r, t), vec3_init(0.0, 0.0, -1.0)));
-    return vec3_scalar_multiply(vec3_init(N.x + 1.0, N.y + 1.0, N.z + 1.0),
-                                0.5);
-  }
   vec3 unit = vec3_unit_vector(r.dir);
   double a = 0.5 * (unit.y + 1.0);
   vec3 comp1 = vec3_scalar_multiply(vec3_init(1.0, 1.0, 1.0), 1.0 - a);
@@ -36,7 +23,6 @@ color ray_color(ray r) {
 
 int main(void) {
   FILE *file;
-  // hello
   file = fopen("log.txt", "w");
   if (file == NULL) {
     exit(EXIT_FAILURE);
@@ -46,6 +32,17 @@ int main(void) {
   int image_width = 400;
   int image_height = (int)(image_width / aspect_ratio);
   image_height = (image_height < 1) ? 1 : image_height;
+
+  sphere_list_t world;
+  int err = sl_init(&world, 10);
+  if (err < 0) {
+    fprintf(stderr, "failed to create sphere list world");
+    exit(EXIT_FAILURE);
+  }
+  sphere s1 = sphere_init(vec3_init(0, 0, -1), 0.5);
+  sphere s2 = sphere_init(vec3_init(0, -100.5, -1), 100);
+  sl_push(&world, s1);
+  sl_push(&world, s2);
 
   double focal_length = 1.0;
   double viewport_height = 2.0;
@@ -78,7 +75,7 @@ int main(void) {
                             vec3_scalar_multiply(pixel_delta_v, (double)j)));
       vec3 ray_direction = vec3_subtract(pixel_center, camera_center);
       ray r = ray_init(camera_center, ray_direction);
-      color pixel_color = ray_color(r);
+      color pixel_color = ray_color(r, &world);
       write_color(pixel_color);
     }
   }
@@ -86,5 +83,6 @@ int main(void) {
   fprintf(file, "\rDone.						"
                 "		\n");
   fclose(file);
+  sl_destroy(&world);
   exit(EXIT_SUCCESS);
 }
