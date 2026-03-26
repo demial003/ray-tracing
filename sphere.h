@@ -25,8 +25,7 @@ sphere sphere_init(point3 center, double radius) {
   return s;
 }
 
-bool sphere_hit(sphere s, ray r, double ray_tmin, double ray_tmax,
-                hit_record *rec) {
+bool sphere_hit(sphere s, ray r, interval ray_t, hit_record *rec) {
   vec3 oc = vec3_subtract(s.center, r.orig);
   double a = vec3_dot(r.dir, r.dir);
   double h = vec3_dot(r.dir, oc);
@@ -40,9 +39,9 @@ bool sphere_hit(sphere s, ray r, double ray_tmin, double ray_tmax,
 
   double sqrtd = sqrt(discriminant);
   double root = (h - sqrtd) / a;
-  if (root <= ray_tmin || ray_tmax <= root) {
+  if (!interval_surrounds(ray_t, root)) {
     root = (h + sqrtd) / a;
-    if (root <= ray_tmin || ray_tmax <= root) {
+    if (!interval_surrounds(ray_t, root)) {
       return false;
     }
   }

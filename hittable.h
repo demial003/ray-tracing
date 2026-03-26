@@ -1,6 +1,7 @@
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
+#include "interval.h"
 #include "vec3.h"
 #include <stdbool.h>
 
