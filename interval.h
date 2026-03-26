@@ -21,4 +21,11 @@ bool interval_contains(interval h, double x) {
 
 bool interval_surrounds(interval h, double x) { return h.min < x && h.max > x; }
 
+double interval_clamp(interval h, double x) {
+  if (x < h.min)
+    return h.min;
+  if (x > h.max)
+    return h.max;
+  return x;
+}
 #endif

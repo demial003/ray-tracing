@@ -6,11 +6,13 @@
 #include "hittable.h"
 
 union camera_t {
-  double data[16];
+  double data[18];
   struct {
     double aspect_ratio;
     int image_width;
     int image_height;
+    int samples_per_pixel;
+    double pixel_samples_scale;
     point3 center;
     point3 pixel00_loc;
     vec3 pixel_delta_u;
@@ -34,9 +36,29 @@ color ray_color(ray r, sphere_list_t *world) {
   return vec3_add(comp1, comp2);
 }
 
+vec3 sample_square() {
+  return vec3_init(rand_double() - 0.5, rand_double() - 0.5, 0);
+}
+
+ray get_ray(camera *cam, int i, int j) {
+  vec3 offset = sample_square();
+  vec3 pixel_sample = vec3_add(
+      cam->pixel00_loc,
+      vec3_add(vec3_scalar_multiply(cam->pixel_delta_u, i + offset.x),
+               vec3_scalar_multiply(cam->pixel_delta_v, j + offset.y)));
+  point3 ray_origin = cam->center;
+  vec3 ray_direction = vec3_subtract(pixel_sample, ray_origin);
+  ray r = ray_init(ray_origin, ray_direction);
+
+  return r;
+}
+
 void initialize(camera *cam) {
   cam->image_height = (int)(cam->image_width / cam->aspect_ratio);
-  //  cam->image_height = (cam->image_height < 1) ? 1 : cam->image_height;
+  cam->image_height = (cam->image_height < 1) ? 1 : cam->image_height;
+
+  cam->samples_per_pixel = 100;
+  cam->pixel_samples_scale = 1.0 / cam->samples_per_pixel;
 
   cam->center = vec3_init(0, 0, 0);
 
@@ -67,19 +89,15 @@ void render(camera *cam, sphere_list_t *world, FILE *file) {
   initialize(cam);
 
   printf("P3\n%d %d\n255\n", cam->image_width, cam->image_height);
-
   for (int j = 0; j < cam->image_height; j++) {
     fprintf(file, "\rScanlines remaining: %d\n", cam->image_height - j);
     for (int i = 0; i < cam->image_width; i++) {
-      vec3 pixel_center = vec3_add(
-          cam->pixel00_loc,
-          vec3_add(vec3_scalar_multiply(cam->pixel_delta_u, (double)i),
-                   vec3_scalar_multiply(cam->pixel_delta_v, (double)j)));
-      vec3 ray_direction = vec3_subtract(pixel_center, cam->center);
-      ray r = ray_init(cam->center, ray_direction);
-
-      color pixel_color = ray_color(r, world);
-      write_color(pixel_color);
+      color pixel_color = vec3_init(0.0, 0.0, 0.0);
+      for (int sample = 0; sample < cam->samples_per_pixel; sample++) {
+        ray r = get_ray(cam, i, j);
+        pixel_color = vec3_add(pixel_color, ray_color(r, world));
+      }
+      write_color(vec3_scalar_multiply(pixel_color, cam->pixel_samples_scale));
     }
   }
 }
