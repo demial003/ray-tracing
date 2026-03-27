@@ -69,6 +69,35 @@ double vec3_length_squared(vec3 v) { return vec3_dot(v, v); }
 double vec3_length(vec3 v) { return sqrt(vec3_length_squared(v)); }
 
 vec3 vec3_unit_vector(vec3 v) { return vec3_scalar_divide(v, vec3_length(v)); }
+
+vec3 vec3_rand() {
+  return vec3_init(rand_double(), rand_double(), rand_double());
+}
+
+vec3 vec3_random(double min, double max) {
+  return vec3_init(random_double(min, max), random_double(min, max),
+                   random_double(min, max));
+}
+
+vec3 vec3_random_unit_vector() {
+  while (1) {
+    vec3 p = vec3_random(-1, 1);
+    double lensq = vec3_length_squared(p);
+    if (1e-160 < lensq && lensq <= 1) {
+      return vec3_scalar_divide(p, sqrt(lensq));
+    }
+  }
+}
+
+vec3 vec3_random_on_hemisphere(vec3 normal) {
+  vec3 on_unit_sphere = vec3_random_unit_vector();
+  if (vec3_dot(normal, on_unit_sphere) > 0.0) {
+    return on_unit_sphere;
+  } else {
+    return vec3_scalar_multiply(on_unit_sphere, -1);
+  }
+}
+
 void vec3_print(vec3 v) { printf("%f %f %f\n", v.x, v.y, v.z); }
 
 #endif

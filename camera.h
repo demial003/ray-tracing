@@ -6,13 +6,14 @@
 #include "hittable.h"
 
 union camera_t {
-  double data[18];
+  double data[19];
   struct {
     double aspect_ratio;
     int image_width;
     int image_height;
     int samples_per_pixel;
     double pixel_samples_scale;
+    int max_depth;
     point3 center;
     point3 pixel00_loc;
     vec3 pixel_delta_u;
@@ -22,11 +23,16 @@ union camera_t {
 
 typedef union camera_t camera;
 
-color ray_color(ray r, sphere_list_t *world) {
+color ray_color(ray r, int depth, sphere_list_t *world) {
+  if (depth <= 0) {
+    return vec3_init(0, 0, 0);
+  }
   hit_record rec;
-  if (sphere_list_hit(world, r, interval_init(0, infinity), &rec)) {
-    color c = vec3_init(1, 1, 1);
-    return vec3_scalar_multiply(vec3_add(rec.normal, c), 0.5);
+  if (sphere_list_hit(world, r, interval_init(0.001, infinity), &rec)) {
+    vec3 direction = vec3_random_on_hemisphere(rec.normal);
+    ray r = ray_init(rec.p, direction);
+
+    return vec3_scalar_multiply(ray_color(r, depth - 1, world), 0.5);
   }
 
   vec3 unit = vec3_unit_vector(r.dir);
@@ -56,8 +62,6 @@ ray get_ray(camera *cam, int i, int j) {
 void initialize(camera *cam) {
   cam->image_height = (int)(cam->image_width / cam->aspect_ratio);
   cam->image_height = (cam->image_height < 1) ? 1 : cam->image_height;
-
-  cam->samples_per_pixel = 100;
   cam->pixel_samples_scale = 1.0 / cam->samples_per_pixel;
 
   cam->center = vec3_init(0, 0, 0);
@@ -95,7 +99,8 @@ void render(camera *cam, sphere_list_t *world, FILE *file) {
       color pixel_color = vec3_init(0.0, 0.0, 0.0);
       for (int sample = 0; sample < cam->samples_per_pixel; sample++) {
         ray r = get_ray(cam, i, j);
-        pixel_color = vec3_add(pixel_color, ray_color(r, world));
+        pixel_color =
+            vec3_add(pixel_color, ray_color(r, cam->max_depth, world));
       }
       write_color(vec3_scalar_multiply(pixel_color, cam->pixel_samples_scale));
     }

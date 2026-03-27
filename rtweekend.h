@@ -1,7 +1,6 @@
 #ifndef RTWEEKEND_H
 #define RTWEEKEND_H
 
-#include "vec3.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +15,8 @@ double rand_double() { return rand() / (RAND_MAX + 1.0); }
 double random_double(double min, double max) {
   return min + (max - min) * rand_double();
 }
+
+#include "vec3.h"
 
 #include "color.h"
 #include "ray.h"
