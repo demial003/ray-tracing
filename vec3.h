@@ -98,6 +98,24 @@ vec3 vec3_random_on_hemisphere(vec3 normal) {
   }
 }
 
+bool vec3_near_zero(vec3 v) {
+  double s = 1e-8;
+  return abs(v.x < s) && abs(v.y < s) && abs(v.z < s);
+}
+
+vec3 vec3_reflect(vec3 v, vec3 n) {
+  return vec3_subtract(v, vec3_scalar_multiply(n, vec3_dot(v, n) * 2));
+}
+
+vec3 vec3_refract(vec3 uv, vec3 n, double etai_over_etat) {
+  double cos_theta = fmin(vec3_dot(vec3_scalar_multiply(uv, -1), n), 1.0);
+  vec3 r_out_perp = vec3_scalar_multiply(
+      vec3_add(uv, vec3_scalar_multiply(n, cos_theta)), etai_over_etat);
+  vec3 r_out_parallel = vec3_scalar_multiply(
+      n, -sqrt(fabs(1.0 - vec3_length_squared(r_out_perp))));
+  return vec3_add(r_out_perp, r_out_parallel);
+}
+
 void vec3_print(vec3 v) { printf("%f %f %f\n", v.x, v.y, v.z); }
 
 #endif

@@ -5,16 +5,17 @@
 #include <stdbool.h>
 
 union sphere_t {
-  double data[4];
+  double data[8];
   struct {
     point3 center;
     double radius;
+    material mat;
   };
 };
 
 typedef union sphere_t sphere;
 
-sphere sphere_init(point3 center, double radius) {
+sphere sphere_init(point3 center, double radius, material mat) {
   sphere s;
   if (radius > 0) {
     s.radius = radius;
@@ -22,6 +23,7 @@ sphere sphere_init(point3 center, double radius) {
     s.radius = 0;
   }
   s.center = center;
+  s.mat = mat;
   return s;
 }
 
@@ -51,6 +53,7 @@ bool sphere_hit(sphere s, ray r, interval ray_t, hit_record *rec) {
   vec3 outward_normal =
       vec3_scalar_divide(vec3_subtract(rec->p, s.center), s.radius);
   hit_record_set_face_normal(rec, r, outward_normal);
+  rec->mat = s.mat;
   return true;
 }
 

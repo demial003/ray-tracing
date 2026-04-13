@@ -9,6 +9,18 @@ void write_color(color pixel_color) {
   double g = pixel_color.y;
   double b = pixel_color.z;
 
+  if (r > 0) {
+    r = sqrt(r);
+  }
+
+  if (g > 0) {
+    g = sqrt(g);
+  }
+
+  if (b > 0) {
+    b = sqrt(b);
+  }
+
   interval intensity = interval_init(0.000, 0.999);
   int rbyte = (256 * interval_clamp(intensity, r));
   int gbyte = (256 * interval_clamp(intensity, g));

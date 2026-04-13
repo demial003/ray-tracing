@@ -4,6 +4,7 @@
 #include "rtweekend.h"
 
 #include "hittable.h"
+#include "material.h"
 
 union camera_t {
   double data[19];
@@ -29,10 +30,12 @@ color ray_color(ray r, int depth, sphere_list_t *world) {
   }
   hit_record rec;
   if (sphere_list_hit(world, r, interval_init(0.001, infinity), &rec)) {
-    vec3 direction = vec3_random_on_hemisphere(rec.normal);
-    ray r = ray_init(rec.p, direction);
-
-    return vec3_scalar_multiply(ray_color(r, depth - 1, world), 0.5);
+    ray scattered;
+    color attenuation;
+    if (material_scatter(r, rec, &attenuation, &scattered)) {
+      return vec3_multiply(ray_color(scattered, depth - 1, world), attenuation);
+    }
+    return vec3_init(0, 0, 0);
   }
 
   vec3 unit = vec3_unit_vector(r.dir);

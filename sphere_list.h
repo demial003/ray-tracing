@@ -17,7 +17,11 @@ typedef struct {
 
 int sl_init(sphere_list_t *s, unsigned capacity) {
   assert(capacity > 0);
-  s->data = malloc(capacity * sizeof(sphere *));
+  if (s->len == capacity) {
+    capacity = 5 * capacity;
+    s->data = realloc(s->data, capacity * sizeof(sphere));
+  }
+  s->data = malloc(capacity * sizeof(sphere));
   if (s->data == NULL) {
     return -1;
   }
@@ -49,7 +53,7 @@ int sl_push(sphere_list_t *s, sphere item) {
   s->data[s->len] = item;
   s->len++;
 
-  return -0;
+  return 0;
 }
 
 bool sphere_list_hit(sphere_list_t *s, ray r, interval ray_t, hit_record *rec) {

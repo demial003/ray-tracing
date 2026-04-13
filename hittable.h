@@ -1,17 +1,33 @@
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
-#include "interval.h"
 #include "vec3.h"
 #include <stdbool.h>
 
+#include "interval.h"
+
+enum materials { LAMBERTIAN = 1, METAL = 2, DIELECTRIC = 3 };
+
+union material_t {
+  double data[5];
+  struct {
+    color albedo;
+    int type;
+    double fuzz;
+    double refraction_index;
+  };
+};
+
+typedef union material_t material;
+
 union hit_record_t {
-  double data[10];
+  double data[13];
   struct {
     point3 p;
     vec3 normal;
     double t;
     bool front_face;
+    material mat;
   };
 };
 
