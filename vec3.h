@@ -1,4 +1,4 @@
-#ifndef VEC3_H
+#ifndef VEC3_H;
 #define VEC3_H
 
 #include <math.h>
@@ -60,8 +60,8 @@ double vec3_dot(vec3 v1, vec3 v2) {
 }
 
 vec3 vec3_cross(vec3 v1, vec3 v2) {
-  return vec3_init(v1.y * v2.z - v1.z * v2.y, v1.x * v2.z - v1.z * v2.x,
-                   v1.x * v2.y - v2.y * v1.x);
+  return vec3_init(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z,
+                   v1.x * v2.y - v1.y * v2.x);
 }
 
 double vec3_length_squared(vec3 v) { return vec3_dot(v, v); }

@@ -55,11 +55,11 @@ int main(void) {
     fprintf(stderr, "failed to push sphere into list");
     exit(EXIT_FAILURE);
   }
-  if (sl_push(&world, s4) < 0) {
+  if (sl_push(&world, s5) < 0) {
     fprintf(stderr, "failed to push sphere into list");
     exit(EXIT_FAILURE);
   }
-  if (sl_push(&world, s5) < 0) {
+  if (sl_push(&world, s4) < 0) {
     fprintf(stderr, "failed to push sphere into list");
     exit(EXIT_FAILURE);
   }
@@ -70,6 +70,10 @@ int main(void) {
   cam.image_width = 400;
   cam.samples_per_pixel = 100;
   cam.max_depth = 50;
+  cam.vfov = 90;
+  cam.lookfrom = vec3_init(-2, 0, 0);
+  cam.lookat = vec3_init(0, 0, -1);
+  cam.vup = vec3_init(0, 1, 0);
 
   render(&cam, &world, file);
 

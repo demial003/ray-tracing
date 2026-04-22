@@ -7,7 +7,7 @@
 #include "material.h"
 
 union camera_t {
-  double data[19];
+  double data[30];
   struct {
     double aspect_ratio;
     int image_width;
@@ -19,6 +19,10 @@ union camera_t {
     point3 pixel00_loc;
     vec3 pixel_delta_u;
     vec3 pixel_delta_v;
+    double vfov;
+    point3 lookfrom;
+    point3 lookat;
+    vec3 vup;
   };
 };
 
@@ -67,27 +71,37 @@ void initialize(camera *cam) {
   cam->image_height = (cam->image_height < 1) ? 1 : cam->image_height;
   cam->pixel_samples_scale = 1.0 / cam->samples_per_pixel;
 
-  cam->center = vec3_init(0, 0, 0);
+  cam->center = cam->lookfrom;
 
-  double focal_length = 1.0;
-  double viewport_height = 2.0;
+  double focal_length = vec3_length(vec3_subtract(cam->lookfrom, cam->lookat));
+  double theta = degrees_to_radians(cam->vfov);
+  double h = tan(theta / 2.0);
+  double viewport_height = 2.0 * h * focal_length;
   double viewport_width =
-      viewport_height * ((double)cam->image_width) / cam->image_height;
-  cam->center = vec3_init(0, 0, 0);
+      viewport_height * ((double)cam->image_width / (double)cam->image_height);
 
-  vec3 viewport_u = vec3_init(viewport_width, 0, 0);
-  vec3 viewport_v = vec3_init(0, -viewport_height, 0);
+  vec3 w = vec3_unit_vector(vec3_subtract(cam->lookfrom, cam->lookat));
+  vec3 u = vec3_unit_vector(vec3_cross(cam->vup, w));
+  vec3 v = vec3_cross(w, u);
+
+  vec3 viewport_u = vec3_scalar_multiply(u, viewport_width);
+  vec3 viewport_v =
+      vec3_scalar_multiply(vec3_scalar_multiply(v, -1.0), viewport_height);
 
   cam->pixel_delta_u = vec3_scalar_divide(viewport_u, (double)cam->image_width);
   cam->pixel_delta_v =
       vec3_scalar_divide(viewport_v, (double)cam->image_height);
 
-  point3 viewport_uppper_left = vec3_subtract(
-      cam->center, vec3_add(vec3_init(0, 0, focal_length),
-                            vec3_add(vec3_scalar_divide(viewport_u, 2),
-                                     vec3_scalar_divide(viewport_v, 2))));
+  vec3 half_u = vec3_scalar_divide(viewport_u, 2.0);
+  vec3 half_v = vec3_scalar_divide(viewport_v, 2.0);
+  vec3 look_direction = vec3_scalar_multiply(w, focal_length);
+
+  point3 viewport_upper_left = vec3_subtract(
+      vec3_subtract(vec3_subtract(cam->center, look_direction), half_u),
+      half_v);
+
   cam->pixel00_loc =
-      vec3_add(viewport_uppper_left,
+      vec3_add(viewport_upper_left,
                vec3_scalar_multiply(
                    vec3_add(cam->pixel_delta_u, cam->pixel_delta_v), 0.5));
 }
