@@ -7,7 +7,7 @@
 #include "material.h"
 
 union camera_t {
-  double data[30];
+  double data[40];
   struct {
     double aspect_ratio;
     int image_width;
@@ -23,6 +23,10 @@ union camera_t {
     point3 lookfrom;
     point3 lookat;
     vec3 vup;
+    double defocus_angle;
+    double focus_dist;
+    vec3 defocus_disk_u;
+    vec3 defocus_disk_v;
   };
 };
 
@@ -53,13 +57,20 @@ vec3 sample_square() {
   return vec3_init(rand_double() - 0.5, rand_double() - 0.5, 0);
 }
 
+point3 defocus_disk_sample(camera *cam) {
+  vec3 p = vec3_random_in_unit_disk();
+  vec3 comp_u = vec3_scalar_multiply(cam->defocus_disk_u, p.x);
+  vec3 comp_v = vec3_scalar_multiply(cam->defocus_disk_v, p.y);
+  return vec3_add(cam->center, vec3_add(comp_u, comp_v));
+}
 ray get_ray(camera *cam, int i, int j) {
   vec3 offset = sample_square();
   vec3 pixel_sample = vec3_add(
       cam->pixel00_loc,
       vec3_add(vec3_scalar_multiply(cam->pixel_delta_u, i + offset.x),
                vec3_scalar_multiply(cam->pixel_delta_v, j + offset.y)));
-  point3 ray_origin = cam->center;
+  point3 ray_origin =
+      (cam->defocus_angle <= 0) ? cam->center : defocus_disk_sample(cam);
   vec3 ray_direction = vec3_subtract(pixel_sample, ray_origin);
   ray r = ray_init(ray_origin, ray_direction);
 
@@ -73,10 +84,9 @@ void initialize(camera *cam) {
 
   cam->center = cam->lookfrom;
 
-  double focal_length = vec3_length(vec3_subtract(cam->lookfrom, cam->lookat));
   double theta = degrees_to_radians(cam->vfov);
   double h = tan(theta / 2.0);
-  double viewport_height = 2.0 * h * focal_length;
+  double viewport_height = 2.0 * h * cam->focus_dist;
   double viewport_width =
       viewport_height * ((double)cam->image_width / (double)cam->image_height);
 
@@ -94,7 +104,7 @@ void initialize(camera *cam) {
 
   vec3 half_u = vec3_scalar_divide(viewport_u, 2.0);
   vec3 half_v = vec3_scalar_divide(viewport_v, 2.0);
-  vec3 look_direction = vec3_scalar_multiply(w, focal_length);
+  vec3 look_direction = vec3_scalar_multiply(w, cam->focus_dist);
 
   point3 viewport_upper_left = vec3_subtract(
       vec3_subtract(vec3_subtract(cam->center, look_direction), half_u),
@@ -104,6 +114,11 @@ void initialize(camera *cam) {
       vec3_add(viewport_upper_left,
                vec3_scalar_multiply(
                    vec3_add(cam->pixel_delta_u, cam->pixel_delta_v), 0.5));
+
+  double defocus_radius =
+      cam->focus_dist * tan(degrees_to_radians(cam->defocus_angle / 2));
+  cam->defocus_disk_u = vec3_scalar_multiply(u, defocus_radius);
+  cam->defocus_disk_v = vec3_scalar_multiply(v, defocus_radius);
 }
 
 void render(camera *cam, sphere_list_t *world, FILE *file) {

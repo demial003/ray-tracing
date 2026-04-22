@@ -70,6 +70,14 @@ double vec3_length(vec3 v) { return sqrt(vec3_length_squared(v)); }
 
 vec3 vec3_unit_vector(vec3 v) { return vec3_scalar_divide(v, vec3_length(v)); }
 
+vec3 vec3_random_in_unit_disk() {
+  while (1) {
+    vec3 p = vec3_init(random_double(-1, 1), random_double(-1, 1), 0);
+    if (vec3_length_squared(p) < 1) {
+      return p;
+    }
+  }
+}
 vec3 vec3_rand() {
   return vec3_init(rand_double(), rand_double(), rand_double());
 }
